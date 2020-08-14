@@ -7,3 +7,6 @@ class Event(models.Model):
     location = models.CharField(max_length=500)
 
     category = models.CharField(max_length=20)
+
+    def __repr__(self):
+        return self.name
