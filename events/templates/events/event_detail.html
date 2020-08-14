@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block title %}
+    <title>Detail {{ event.name }}</title>
+{% endblock title %}
+
+{% block content %}
+<ul>
+    <li>{{ event.name }}</li>
+    <li>LOCATION: {{ event.location}}</li>
+    <li> DESCRIPTION: {{ event.description }}</li>
+</ul>
+<ul>
+    <h2>Event run</h2>
+    {% for event_run in event_run %}
+    <li>Date: {{ event_run.happens }}</li>
+    <li>Seats available: {{ event_run.seats_available}}</li>
+    <li> Price: {{ event_run.price }}</li>
+    <br>
+    {% endfor %}
+</ul>
+{% endblock content %}
