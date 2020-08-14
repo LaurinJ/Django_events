@@ -1,13 +1,11 @@
-<!DOCTYPE html>
-<html>
-<head>
+{% extends 'base.html' %}
+{% block title %}
     <title>Event Listing</title>
-</head>
-<body>
+{% endblock title %}
+{% block content %}
     <ul>
     {% for event in events %}
     <li>{{ event.name }} LOCATION: {{ event.location}} DESCRIPTION: {{ event.description }}
     {% endfor %}
     </ul>
-</body>
-</html>
+{% endblock content %}
