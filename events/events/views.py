@@ -2,7 +2,7 @@ from django.shortcuts import render
 from django.http import HttpResponse
 
 def index(request):
-    return HttpResponse('Ahoj ja nejsem django :D')
+    return render(request, 'events/index.html')
 
 def events(request, name):
     events = {'swiming':'456 Euro',
