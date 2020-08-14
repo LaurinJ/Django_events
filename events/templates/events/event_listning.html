@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Event Listing</title>
+</head>
+<body>
+    <ul>
+    {% for event in events %}
+    <li>{{ event.name }} LOCATION: {{ event.location}} DESCRIPTION: {{ event.description }}
+    {% endfor %}
+    </ul>
+</body>
+</html>

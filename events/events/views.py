@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from django.http import HttpResponse
+from .models import Event, EventRun
 
 def index(request):
     return render(request, 'events/index.html')
@@ -14,11 +15,5 @@ def events(request, name):
     return HttpResponse('Neexistujci udalost')
 
 def event_listing(request):
-    html = '''
-    <ul>
-        <li><a href="chill/">Chill on the beach</a></li>
-        <li>Camping in the woods</li>
-        <li>Flying into the space</li>
-    </ul>
-    '''
-    return HttpResponse(html)
+    events = Event.objects.all()
+    return render(request, 'events/event_listning.html', {'events':events})
