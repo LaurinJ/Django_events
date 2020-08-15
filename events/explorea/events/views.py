@@ -7,7 +7,7 @@ def index(request):
 
 def event_detail(request, id):
     event = Event.objects.get(pk=id)
-    event_run = EventRun.objects.filter(event_id=id)
+    event_run = event.eventrun_set.all()
     if event:
         return render(request, 'events/event_detail.html', {'event':event, 'event_run':event_run})
     return HttpResponse('Neexistujci udalost')
