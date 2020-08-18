@@ -1,19 +1,9 @@
 from django import forms
-
 from django.contrib.auth import get_user_model
+from django.contrib.auth.forms import UserCreationForm
 
-class RegisterForm(forms.ModelForm):
-    password1 = forms.CharField(
-        label="Password",
-        strip=False,
-        widget=forms.PasswordInput,
-    )
-    password2 = forms.CharField(
-        label="Password confirmation",
-        widget=forms.PasswordInput,
-        strip=False,
-        help_text="Enter the same password as before, for verification.",
-    )
+class RegisterForm(UserCreationForm):
+
     class Meta:
         model = get_user_model()
         fields = [
@@ -21,6 +11,8 @@ class RegisterForm(forms.ModelForm):
             'email',
             'first_name',
             'last_name',
+            'password1',
+            'password2',
         ]
 
 # class RegisterForm(forms.Form):
