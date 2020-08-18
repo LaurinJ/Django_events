@@ -1,11 +1,19 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login
 
-from .forms import RegisterForm
+from .forms import RegisterForm, EditProfileForm
 
 def profile(request):
     return render(request, 'accounts/profile.html')
 
+def edit_profile(request):
+    if request.method == 'POST':
+        form = EditProfileForm(request.POST, instance=request.user)
+        if form.is_valid():
+            user = form.save()
+            return redirect('profile')
+    form = EditProfileForm(instance=request.user)
+    return render(request, 'accounts/edit_profile.html', {'form': form})
 
 def register(request):
     if request.method == 'POST':
