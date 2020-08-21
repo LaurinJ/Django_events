@@ -1,4 +1,18 @@
 {% extends 'base.html' %}
 {% block content %}
-{{ user }}
+
+<p>Username: {{ user }}</p>
+<p>Email: {{ user.email }}</p>
+<p>First name: {{ user.first_name }}</p>
+<p>Last name: {{ user.last_name }}</p>
+<p>Last login: {{ user.last_login }}</p>
+{% if user.is_authenticated %}
+    <p><a href="/accounts/profile/edit">Edit</a></p>
+    <p><a href="/events/add">Create event</a></p>
+{% endif %}
+<br>
+<h2>Your events</h2>
+{% for event in events %}
+    <p><a href="/events/{{ event.pk }}">{{ event }}</a> <a href="/events/{{ event.pk }}/edit">edit</a></p>
+{% endfor %}
 {% endblock content %}

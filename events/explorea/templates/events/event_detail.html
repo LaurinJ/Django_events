@@ -11,10 +11,16 @@
 </ul>
 <ul>
     <h2>Event run</h2>
+    {% if user.is_authenticated and event.host_id == user.pk %}
+    <a href="/events/{{ event.pk }}/add_run/">Create event run</a>
+    {% endif %}
     {% for event_run in event_run %}
     <li>Date: {{ event_run.happens }}</li>
     <li>Seats available: {{ event_run.seats_available}}</li>
     <li> Price: {{ event_run.price }}</li>
+    {% if user.is_authenticated and event.host_id == user.pk %}
+    <li><a href="/events/{{ event_run.pk }}/edit_run">Edit</a></li>
+    {% endif %}
     <br>
     {% endfor %}
 </ul>

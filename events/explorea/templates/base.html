@@ -9,8 +9,12 @@
     <div>
         {% if user.is_authenticated %}
         <a href="/accounts/logout/">LOG OUT</a>
+        <a href="/accounts/profile/">Profil</a>
+        {{ user }}
+        <a href="/events">Events</a>
         {% else %}
         <a href="/accounts/login/">LOG IN</a>
+        <a href="/events">Events</a>
         {% endif %}
     </div>
     <h1>EVENTS</h1>

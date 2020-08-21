@@ -1,10 +1,12 @@
 from django.db import models
+from django.conf import settings
 
 
 class Event(models.Model):
     name = models.CharField(max_length=200)
     description = models.TextField(max_length=1000)
     location = models.CharField(max_length=500)
+    host = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 
     category = models.CharField(max_length=20)
 
