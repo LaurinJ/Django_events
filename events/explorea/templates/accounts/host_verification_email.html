@@ -1,0 +1,11 @@
+<p>Dear {{ user.username }}</p>
+
+<p>You are one step from becoming host at Explorea. Please click the below link button to complete the verification:</p>
+
+<a href="http://{{ domain }}{% url 'accounts:activate_host' uidb64 token %}" target="_blank">Verify</a>
+
+
+<p>Thanks for using our site!</p>
+
+<p>The Explorea team</p>
+

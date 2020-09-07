@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% load cart_tags %}
+
+{% block title %}
+<title>Cart Detail</title>
+{% endblock %}
+
+{% block content %}
+
+{% if cart.is_empty %}
+<p>The cart is empty</p> 
+{% else %}
+    <table>
+        <thead>
+            <tr>
+                <th>NAME</th>
+                <th>DESCRIPTION</th>
+                <th>PRICE</th>
+                <th>QUANTITY</th>
+                <th></th>
+            </tr>
+        </thead>
+    {% for item in cart %}
+        <tr>
+            <td>
+                <a href="{{ item.object.event.get_absolute_url }}">
+                    {{ item.object.event.name }}
+                </a>
+            </td>
+            <td>With {{ item.object.event.host }} in {{ item.object.event.location }}</td>
+            <td>$ {{ item.total_price }}</td>
+            <td>
+                {% url 'cart:add' item.object.event.slug as cart_add_url %}
+                <form action="{{ cart_add_url }}"  method='POST'>
+                    {% csrf_token %}
+                    {{ item.cartadd_form.quantity }}
+                    <input name="current_quantity" value="{% get_key cart item.object.id %}" type="hidden">
+                    {{ item.cartadd_form.update }}
+                    <input name="product_id" value={{ item.object.id }} type="hidden">
+                    <button type='submit'>Update</button>
+                </form>
+            </td>
+            <td><a href="{% url 'cart:remove' item.object.id %}">REMOVE</a></td>
+        </tr>
+     
+    {% endfor %}
+</table>
+{% endif %}
+{% endblock content %}

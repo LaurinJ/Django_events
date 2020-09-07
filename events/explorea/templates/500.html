@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<h3>This is problem on our side</h3>
+{% if request.get_full_path == '/accounts/become-host/' %}
+    <p>We currently cannot send you a confirmation email. We will fix it soon. Please try it later again.</p>
+{% endif %}
+<p>Let's go back to our home page.
+<br>
+<div>
+    <a href="{% url "index" %}" class="button-gold">Back to home page</a>
+</div>
+{% endblock %}

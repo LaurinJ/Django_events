@@ -1,25 +1,23 @@
+{% load static %}
+
 <!DOCTYPE html>
 <html>
 <head>
     {% block title %}
 
     {% endblock title %}
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/all.css" integrity="sha384-lKuwvrZot6UHsBSfcMvOkWwlCMgc0TaWr+30HWe3a4ltaBwTZhyTEggF5tJv8tbt" crossorigin="anonymous">
+
+    <link rel="stylesheet" type="text/css" href="{% static 'css/base.css' %}">
+
 </head>
 <body>
-    <div>
-        {% if user.is_authenticated %}
-        <a href="/accounts/logout/">LOG OUT</a>
-        <a href="/accounts/profile/">Profil</a>
-        {{ user }}
-        <a href="/events">Events</a>
-        {% else %}
-        <a href="/accounts/login/">LOG IN</a>
-        <a href="/events">Events</a>
-        {% endif %}
-    </div>
-    <h1>EVENTS</h1>
-    {% block content %}
 
-    {% endblock content %}
+    {% include 'header.html' %}
+    
+    {% block content %}{% endblock content %}
+
+    {% include 'footer.html' %}
+    
 </body>
 </html>

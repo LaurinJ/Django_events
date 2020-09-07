@@ -1,14 +1,30 @@
 {% extends 'base.html' %} 
+
 {% block title %}<title>Login</title>{% endblock title %}
+
 {% block content %}
-<div>
-  <h2>Login</h2>
-  
-  <form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Login</button>
-  </form>
-  
+<div class="grid_container">
+    <div class="login-image">
+      
+    </div>
+    <div class="login_form">
+        
+
+        <form method="post">
+            <h2>Login</h2>
+            {% csrf_token %}
+            {% for field in form.visible_fields %}
+                <p>{{ field.label_tag }}{{ field }}</p>
+            {% endfor %}
+
+            <div>
+                <button type="submit">Log in</button>
+                <a class="forgot-pass" href="{% url 'accounts:reset_password' %}">Forgot password</a>
+            </div>
+
+        </form>
+
+    </div>
+
 </div>
 {% endblock %}

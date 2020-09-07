@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+
+{% block title %}
+<title>Email sent</title>
+{% endblock title %}
+
+{% block content %}
+<p>Time to check your email. We have sent you and email to <strong>{{ request.user.email }}</strong> with verification link. Please, click it and we are done</p>
+
+<p>You can close this tab if your want</p>
+{% endblock content %}

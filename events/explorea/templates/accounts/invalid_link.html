@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+
+{% block title %}
+<title>Link invalid</title>
+{% endblock title %}
+
+{% block content %}
+<p>Unfortunately we were not able to perform the verification. Is it possible that your link is older than 7 days?</p>
+
+<p><a href="{% url 'accounts:become_host' %}">Apply again</a></p>
+{% endblock content %}

@@ -1,0 +1,58 @@
+<header>
+
+    <div class="header-section" id="logo-container">
+        <a class="nav-button" href="/">
+            Explorea
+        </a>
+    </div>
+
+    <div class="header-section" id="nav-buttons">
+        <a class="nav-button" href="/events/all">
+            Events
+        </a>
+        <a class="nav-button" href="/events/mine/">
+            My Events
+        </a>
+        <a class="nav-button" href="#">
+            Hosts
+        </a>
+    </div>
+
+    <div class="header-section" id="header-searchbox">
+        <form  action="/events/search/'" method="GET">
+            <input type="text" name='q' placeholder="search...">
+        </form>
+    </div>
+    
+    <div class="header-section" id="user-buttons">
+        <a class="nav-button" title="Your Cart" href="#">
+            <i class="fas fa-shopping-cart"></i>
+        </a>
+        {# {% if user.profile.is_host %} #}
+        <a class="nav-button" title="Add Event" href="#">
+            <i class="fas fa-plus-circle"></i>
+        </a>
+        {# {% endif %} #}
+
+        {% if user.is_authenticated %}
+
+            <a class="nav-button" title="Profile" href="/accounts/profile/">
+                {{ user.username }}
+                <i class="fas fa-user"></i>
+            </a>
+            <a class="nav-button" href="/accounts/logout/">
+                logout
+            </a>
+
+        {% else %}
+            <a class="nav-button" href="/accounts/login/">
+                log in
+            </a>
+            <a class="nav-button" href="/accounts/register/">
+                sign up
+            </a>
+        {% endif %}
+    </div>
+
+</header>
+

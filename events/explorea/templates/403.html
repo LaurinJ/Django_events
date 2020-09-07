@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% load static %}
+
+
+{% block content %}
+    <h3>Sorry, you cannot go here</h3>
+
+    {% if request.get_full_path == '/events/new/'%}
+    <p>If you want create new events, you first have to become a host.</p>
+    <br>
+    <div>
+        <a href="{% url 'accounts:become_host' %}" class="button-gold">Become a host</a>
+    </div>
+    {% endif %}
+{% endblock %}

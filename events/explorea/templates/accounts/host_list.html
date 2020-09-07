@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% load account_tags %}
+{% load static%}
+
+{% block title %}
+<title>Our Hosts</title>
+{% endblock title %}
+
+{% block content %}
+
+{% for profile in profiles %}
+<div>
+    <a href="{{ profile.get_absolute_url }}">
+         {% if  user.profile.avatar|has:'url' %}
+            <img src="{{ user.profile.avatar.url }}" alt='{{ profile.user.username }}'>
+        {% else %}
+            <img src="{% static 'img/avatar.png' %}" alt='Not Available'>
+        {% endif %}
+
+        <p>{{ profile.user.username }}</p>
+    </a>
+</div>
+{% empty %}
+    {% if user|has:'profile' and user.profile.is_host %}
+    <p>You are our only host right now</p>
+    {% else %}
+    <p>There are no hosts at the moment</p>
+    {% endif %}
+{% endfor %}
+
+{% if user|has:'profile' and not user.profile.is_host %}
+<div>
+    <a href="{% url 'accounts:become_host' %}" class="button-gold">Become a host</a>
+</div>
+{% endif %}
+
+{% endblock content %}

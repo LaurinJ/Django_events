@@ -1,23 +1,19 @@
-from django.forms import ModelForm
-from .models import EventRun, Event
+from django import forms
 
-class EventForm(ModelForm):
+from .models import Event, EventRun
+
+
+class EventForm(forms.ModelForm):
 
     class Meta:
         model = Event
         exclude = ['host']
 
-class EditEventForm(ModelForm):
-
-    class Meta:
-        model = Event
-        fields = ['name',
-                  'description',
-                  'location',
-                  'category']
-
-class EventRunForm(ModelForm):
+class EventRunForm(forms.ModelForm):
+    date = forms.DateField(input_formats=["%d.%m.%Y"], 
+        widget=forms.DateInput(format = '%d.%m.%Y'))
 
     class Meta:
         model = EventRun
         exclude = ['event']
+

@@ -1,18 +1,31 @@
 {% extends 'base.html' %}
-{% block content %}
 
-<p>Username: {{ user }}</p>
-<p>Email: {{ user.email }}</p>
-<p>First name: {{ user.first_name }}</p>
-<p>Last name: {{ user.last_name }}</p>
-<p>Last login: {{ user.last_login }}</p>
-{% if user.is_authenticated %}
-    <p><a href="/accounts/profile/edit">Edit</a></p>
-    <p><a href="/events/add">Create event</a></p>
-{% endif %}
+{% block content %}
 <br>
-<h2>Your events</h2>
-{% for event in events %}
-    <p><a href="/events/{{ event.pk }}">{{ event }}</a> <a href="/events/{{ event.pk }}/edit">edit</a></p>
-{% endfor %}
+<table>
+    <tr>
+        <td>Username: </td><td>{{ user.username }}</td>
+    </tr>
+    <tr>
+        <td>First Name: </td><td>{{ user.first_name }}</td>
+    </tr>
+    <tr>
+        <td>Last Name: </td><td>{{ user.last_name }}</td>
+    </tr>
+    <tr>
+        <td>Email: </td><td>{{ user.email }}</td>
+    </tr>
+     <tr>
+        <td>Joined: </td><td>{{ user.date_joined }}</td>
+    </tr>
+</table>
+
+
+<br><br>
+
+{% if user.is_authenticated %}
+<a href="/accounts/profile/edit/">Edit</a>
+<a href="/accounts/change-password/">Change Password</a>
+{% endif %}
+
 {% endblock content %}

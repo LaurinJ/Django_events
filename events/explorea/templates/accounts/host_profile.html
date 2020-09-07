@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load account_tags %}
+
+{% block content %}
+<br>
+<table>
+    <tr>
+        <td>
+        {% if  host.profile.avatar|has:'url' %}
+            <img src="{{ host.profile.avatar.url }}">
+        {% else %}
+            <img src="{% static 'img/avatar.png' %}">
+        {% endif %}
+        </td>
+
+    </tr>
+    <tr>
+        <td>hostname: </td><td>{{ host.hostname }}</td>
+    </tr>
+    <tr>
+        <td>First Name: </td><td>{{ host.first_name }}</td>
+    </tr>
+    <tr>
+        <td>Last Name: </td><td>{{ host.last_name }}</td>
+    </tr>
+    <tr>
+        <td>Email: </td><td>{{ host.email }}</td>
+    </tr>
+    <tr>
+        <td>Joined: </td><td>{{ host.date_joined }}</td>
+    </tr>
+    <tr>
+        <td>About Me: </td><td>{{ host.profile.about }}</td>
+    </tr>
+</table>
+{% endblock content %}
