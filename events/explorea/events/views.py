@@ -10,9 +10,9 @@ def index(request):
 
     return render(request, 'events/index.html')
 
-def event_listing(request):
-
-    events = Event.objects.all()
+def event_listing(request, category=None):
+    events = Event.objects.filter_by_category(category)
+    # events = Event.objects.all()
 
     return render(request, 'events/event_listing.html', {'events': events})
 
