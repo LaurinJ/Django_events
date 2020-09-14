@@ -17,3 +17,12 @@ class EventRunForm(forms.ModelForm):
         model = EventRun
         exclude = ['event']
 
+
+class EventFilterForm(forms.Form):
+    date_from = forms.DateField(label="From", initial=None,
+                                widget=forms.SelectDateWidget, required=False)
+
+    date_to = forms.DateField(label="To", initial=None,
+                              widget=forms.SelectDateWidget, required=False, )
+
+    guests = forms.IntegerField(required=False, min_value=1)

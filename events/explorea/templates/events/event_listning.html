@@ -1,11 +1,44 @@
 {% extends 'base.html' %}
+
 {% block title %}
-    <title>Event Listing</title>
+<title>Event Listing</title>
 {% endblock title %}
+
 {% block content %}
-    <ul>
-    {% for event in events %}
-    <li><a href="{{ event.id }}">{{ event.name }}</a></li>
+<div class="thin-banner">
+    <h1>What do we have here ...</h1>
+</div>
+
+<form class="event-filters"  method="GET">
+    {% for hidden_field in form.hidden_fields %}
+        {{ hidden_field }}
     {% endfor %}
-    </ul>
+    {% for field in filter_form.visible_fields %}
+        <div class="form-filter">
+            {{ field.label_tag }} {{ field }}
+            <div class="errors">
+                {% for error in field.errors %}
+                    <div class="error">{{ error }}</div>
+                {% endfor %}
+            </div>
+        </div>
+
+    {% endfor %}
+    <button type="submit">Filter</button>
+</form>
+
+<div class="event-category-filters">
+    <!--by clicking these buttons we should be taken to event listing, that show us only events of the given event category-->
+    <a class="button-gold" href="{% url 'events:events_by_category' 'fun' %}">Fun</a>
+    <a class="button-gold" href="{% url 'events:events_by_category' 'experience' %}">Experience</a>
+    <a class="button-gold" href="{% url 'events:events_by_category' 'sights' %}">Sights</a>
+    <a class="button-gold" href="{% url 'events:events_by_category' 'relax' %}">Relax</a>
+</div>
+
+<div class="tile-container">
+
+</div>
+
+
+
 {% endblock content %}

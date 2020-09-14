@@ -5,8 +5,9 @@
         {% if page.has_previous %}
             <a href="{% next_page page.previous_page_number %}">&laquo;</a>
         {% endif %}
+
         <span class="pagination-num_pages">
-        {% for page_num in page.paginator.page_range %}
+        {% for page_num in paginator.page_range %}
             {% if page_num == page.number %}
                 <a class="active-pagination" href="#">{{ page_num }}</a>
             {% else %}
@@ -14,8 +15,10 @@
             {% endif %}
         {% endfor %}
         </span>
+
         {% if page.has_next %}
-            <a href="{% next_page page.next_page_number %}">»</a>
+            <a href="{% next_page page.next_page_number %}">&raquo;</a>
         {% endif %}
     </span>
 </div>
+

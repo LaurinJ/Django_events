@@ -1,21 +1,42 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
 
 from .models import Event, EventRun
-from .forms import EventForm, EventRunForm
+from .forms import EventForm, EventRunForm, EventFilterForm
 
 
 def index(request):
 
     return render(request, 'events/index.html')
 
+
 def event_listing(request, category=None):
-    events = Event.objects.filter_by_category(category)
-    # events = Event.objects.all()
+    events = Event.objects.all().filter_by_category(category)
+    filter_form = EventFilterForm(request.GET or None)
 
-    return render(request, 'events/event_listing.html', {'events': events})
+    if request.GET and filter_form.is_valid():
+        data = filter_form.cleaned_data
+    else:
+        data = {}
 
+    events = events.filter_available(**data)
+    paginator = Paginator(events, 1)
+    page = request.GET.get('page')
+    events = paginator.get_page(page)
+    return render(request, 'events/event_listing.html',
+                  {'events': events, 'filter_form': filter_form})
+
+def event_search(request):
+    query = request.GET.get('q')
+    events = Event.objects.search(query)
+    filter_form =  EventFilterForm()
+    paginator = Paginator(events, 4)
+    page = request.GET.get('page')
+    events = paginator.get_page(page)
+    return render(request, 'events/event_listing.html',
+                  {'events': events, 'filter_form': filter_form})
 
 def event_detail(request, pk):
 
@@ -35,7 +56,7 @@ def create_event(request):
             event.host = request.user
             event.save()
 
-            return redirect('my_events')
+            return redirect('events:my_events')
 
     form = EventForm()
     return render(request, 'events/create_event.html', {'form': form})

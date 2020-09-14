@@ -1,8 +1,11 @@
 from django.db import models
 from django.conf import settings
+from django.utils import timezone
+from django.db.models import Q, Max, F
+from django.db.models.aggregates import Max
 
-class EventManager(models.Manager):
-    def filter_by_category(self, category):
+class EventQuerySet(models.QuerySet):
+    def filter_by_category(self, category=None):
         db_equivalent = ''
         for pair in self.model.CATEGORY_CHOICES:
             if pair[1] == category:
@@ -11,6 +14,44 @@ class EventManager(models.Manager):
         else:
             return self.all()
         return self.filter(category=db_equivalent)
+
+    # def filter_available(self, date_from=None, date_to=None, guests=None):
+    #     date_from = date_from or timezone.now().date()
+    #     qs = self.annotate(max_seats=Max('eventrun__seats_available'))
+    #
+    #     if date_to:
+    #         qs = qs.filter(eventrun__date__range=(date_from, date_to))
+    #     else:
+    #         qs = qs.filter(eventrun__date__gte=date_from)
+    #     if guests:
+    #         qs = qs.filter(max_seats__gte=guests)
+    #
+    #     return qs
+
+    def filter_available(self, date_from=None, date_to=None, guests=None):
+        # filter first all the eventruns and then get the ids to events
+        date_from = date_from or timezone.now().date()
+
+        if date_to:
+            qs = EventRun.objects.filter(date__range=(date_from, date_to))
+        else:
+            qs = EventRun.objects.filter(date__gte=date_from)
+        if guests:
+            qs = qs.filter(seats_available__gte=guests)
+        return self.filter(pk__in=qs.values_list('event', flat=True))
+
+class EventManager(models.Manager):
+
+    def get_queryset(self):
+        return EventQuerySet(self.model, using=self._db)
+
+    def search(self, query=None):
+        lookup = (
+                Q(name__icontains=query) |
+                Q(description__icontains=query) |
+                Q(location__icontains=query)
+        )
+        return self.filter(lookup).distinct()
 
 class Event(models.Model):
 
@@ -42,6 +83,9 @@ class Event(models.Model):
 
     def __str__(self):
         return self.name
+
+    class Meta:
+        ordering = ['name']
 
 class EventRun(models.Model):
 

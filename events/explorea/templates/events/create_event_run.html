@@ -4,9 +4,23 @@
 
 <h2>New Run</h2>
 
-<form method='POST'>
-    {% csrf_token %}
-    {{ form.as_p }}
-    <input type="submit" value="Save">
+<form method="POST">
+    {% for hidden_field in form.hidden_fields %}
+        {{ hidden_field }}
+    {% endfor %}
+
+    {% for field in form.visible_fields %}
+        <div class="form-filter">
+            {{ field.label_tag }} {{ field }}
+            <div class="errors">
+                {% for error in field.errors %}
+                    <div class="error">{{ error }}</div>
+                {% endfor %}
+            </div>
+        </div>
+
+    {% endfor %}
+    <button type="submit">Save</button>
 </form>
+
 {% endblock content %}

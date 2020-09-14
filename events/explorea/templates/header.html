@@ -7,7 +7,7 @@
     </div>
 
     <div class="header-section" id="nav-buttons">
-        <a class="nav-button" href="/events/">
+        <a class="nav-button" href="{% url 'events:events' %}">
             Events
         </a>
         <a class="nav-button" href="/events/mine/">
@@ -19,7 +19,7 @@
     </div>
 
     <div class="header-section" id="header-searchbox">
-        <form  action="/events/search/'" method="GET">
+        <form  action="{% url 'events:search' %}" method="GET">
             <input type="text" name='q' placeholder="search...">
         </form>
     </div>
