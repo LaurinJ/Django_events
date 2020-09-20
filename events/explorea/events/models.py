@@ -3,6 +3,8 @@ from django.conf import settings
 from django.utils import timezone
 from django.db.models import Q, Max, F
 from django.db.models.aggregates import Max
+from django.utils.text import slugify
+from django.urls import reverse
 
 class EventQuerySet(models.QuerySet):
     def filter_by_category(self, category=None):
@@ -72,6 +74,8 @@ class Event(models.Model):
     name = models.CharField(max_length=200)
     description = models.TextField(max_length=1000)
     location = models.CharField(max_length=500)
+    slug = models.SlugField(max_length=200, unique=True, null=True)
+    created = models.DateTimeField(auto_now_add=True, null=True)
     
     category = models.CharField(
         max_length=20,
@@ -84,8 +88,17 @@ class Event(models.Model):
     def __str__(self):
         return self.name
 
+    def get_absolute_url(self):
+        return reverse('events:detail', args=[self.slug])
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name + '-with-' + self.host.username)
+        super().save(*args, **kwargs)
+
     class Meta:
         ordering = ['name']
+        unique_together = (("name", "host"),)
 
 class EventRun(models.Model):
 

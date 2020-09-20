@@ -22,7 +22,7 @@ def event_listing(request, category=None):
         data = {}
 
     events = events.filter_available(**data)
-    paginator = Paginator(events, 1)
+    paginator = Paginator(events, 10)
     page = request.GET.get('page')
     events = paginator.get_page(page)
     return render(request, 'events/event_listing.html',
@@ -38,9 +38,9 @@ def event_search(request):
     return render(request, 'events/event_listing.html',
                   {'events': events, 'filter_form': filter_form})
 
-def event_detail(request, pk):
+def event_detail(request, slug):
 
-    event = Event.objects.get(pk=pk)
+    event = Event.objects.get(slug=slug)
     runs = event.eventrun_set.all().order_by('date', 'time')
     args = {'event': event, 'runs': runs}
 
@@ -69,8 +69,8 @@ def my_events(request):
     return render(request, 'events/my_events.html', {'events': events})
 
 @login_required
-def update_event(request, pk):
-    event = Event.objects.get(pk=pk)
+def update_event(request, slug):
+    event = Event.objects.get(slug=slug)
 
     if request.method == 'POST':
         form = EventForm(request.POST, instance=event)
@@ -83,10 +83,10 @@ def update_event(request, pk):
     return render(request, 'events/create_event.html', {'form': form})
 
 @login_required
-def delete_event(request, pk):
+def delete_event(request, slug):
 
-    Event.objects.get(pk=pk).delete()
-    return redirect('my_events')
+    Event.objects.get(slug=slug).delete()
+    return redirect('events:my_events')
 
 @login_required
 def create_event_run(request, event_id):
