@@ -1,8 +1,16 @@
 {% extends 'base.html' %}
-
+{% load static %}
+{% load account_tags %}
 {% block content %}
 <br>
 <table>
+    <td>
+        {% if user.profile.avatar|has:'url' %}
+            <img src="{{ user.profile.avatar.url }}">
+        {% else %}
+            <img src="{% static 'img/avatar.png' %}">
+        {% endif %}
+        </td>
     <tr>
         <td>Username: </td><td>{{ user.username }}</td>
     </tr>

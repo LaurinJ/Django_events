@@ -3,7 +3,7 @@ from django.contrib.auth import authenticate, login, update_session_auth_hash
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.decorators import login_required
 
-from .forms import RegisterForm, EditProfileForm
+from .forms import RegisterForm, EditUserForm, EditProfileForm
 
 @login_required
 def profile(request):
@@ -34,19 +34,19 @@ def register(request):
 
 @login_required
 def edit_profile(request):
+    form_user = EditUserForm(request.POST or None, instance=request.user)
+    form_profile = EditProfileForm(request.POST or None, request.FILES or None, instance=request.user.profile)
 
     if request.method == 'POST':
-        form = EditProfileForm(request.POST, instance=request.user)
-
-        if form.is_valid():
-            user = form.save()
-            request.session['profile_changes'] = request.session.setdefault('profile_changes', 0) + 1
+        if form_user.is_valid() and form_profile.is_valid():
+            user = form_user.save()
+            profile = form_profile.save()
+            # request.session['profile_changes'] = request.session.setdefault('profile_changes', 0) + 1
             return redirect('accounts:profile')
         else:
-            return render(request, 'accounts/edit_profile.html', {'form': form} )
+            return render(request, 'accounts/edit_profile.html', {'form_user': form_user, 'form_profile':form_profile} )
 
-    form = EditProfileForm(instance=request.user)
-    return render(request, 'accounts/edit_profile.html', {'form': form} )
+    return render(request, 'accounts/edit_profile.html', {'form_user':form_user, 'form_profile':form_profile} )
 
 @login_required
 def change_password(request):
