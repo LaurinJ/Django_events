@@ -12,7 +12,7 @@
 <div>
     <a href="{{ profile.get_absolute_url }}">
          {% if  user.profile.avatar|has:'url' %}
-            <img src="{{ user.profile.avatar.url }}" alt='{{ profile.user.username }}'>
+            <img src="{{ profile.avatar.url }}" alt='{{ profile.user.username }}'>
         {% else %}
             <img src="{% static 'img/avatar.png' %}" alt='Not Available'>
         {% endif %}

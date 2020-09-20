@@ -39,20 +39,23 @@
 </div>
 
 <div class="tile-container">
-    {% if events %}
+    {% if events_run %}
     <div class="tile-grid">
 
-            {% for event in events %}
-                <a class="event-tile" href="{{ event.get_absolute_url }}">
-                    {# <img src=""> #}
+            {% for eventrun in events_run %}
+                <a class="event-tile" href="{{ eventrun.event.get_absolute_url }}">
+                    {% if eventrun.event|has:'thumbnail' %}
+                        <img src="{{ eventrun.event.thumbnail.url }}">
+                    {% else %}
                     <div class="not-available"></div>
+                    {% endif %}
                     <div class="event-details">
-                        <p>{{ event.host }}</p>
-                        <p>{{ event.name }}</p>
-                        <p>{{ event.location}}</p>
-                        <p>Next: {{ event.eventrun_set.all|active|min_attr_value:"date" }}</p>
-                        <p>From: {{ event.eventrun_set.all|active|min_attr_value:"price" }}</p>
-                        <p>Seats: {{ event.eventrun_set.all|active|min_attr_value:"price" }}</p>
+                        <p>{{ eventrun.event.host }}</p>
+                        <p>{{ eventrun.event.name }}</p>
+                        <p>{{ eventrun.event.location}}</p>
+                        <p>Next: {{ eventrun.event.eventrun_set.all|active|min_attr_value:"date" }}</p>
+                        <p>From: {{ eventrun.event.eventrun_set.all|active|min_attr_value:"price" }}</p>
+                        <p>Seats: {{ eventrun.event.eventrun_set.all|active|min_attr_value:"price" }}</p>
                     </div>
                 </a>
             {% endfor %}

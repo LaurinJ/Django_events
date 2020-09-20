@@ -3,8 +3,8 @@ from django.http import HttpResponse
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 
-from .models import Event, EventRun
-from .forms import EventForm, EventRunForm, EventFilterForm
+from .models import Event, EventRun, Album, Image
+from .forms import EventForm, EventRunForm, EventFilterForm, MultipleFileForm
 
 
 def index(request):
@@ -13,7 +13,7 @@ def index(request):
 
 
 def event_listing(request, category=None):
-    events = Event.objects.all().filter_by_category(category)
+    events_run = EventRun.objects.all().filter_by_category(category).distinct()
     filter_form = EventFilterForm(request.GET or None)
 
     if request.GET and filter_form.is_valid():
@@ -21,22 +21,22 @@ def event_listing(request, category=None):
     else:
         data = {}
 
-    events = events.filter_available(**data)
-    paginator = Paginator(events, 10)
+    events_run = events_run.filter_available(**data)
+    paginator = Paginator(events_run, 10)
     page = request.GET.get('page')
     events = paginator.get_page(page)
     return render(request, 'events/event_listing.html',
-                  {'events': events, 'filter_form': filter_form})
+                  {'events_run': events_run, 'filter_form': filter_form})
 
 def event_search(request):
     query = request.GET.get('q')
-    events = Event.objects.search(query)
+    events_run = EventRun.objects.search(query)
     filter_form =  EventFilterForm()
-    paginator = Paginator(events, 4)
+    paginator = Paginator(events_run, 4)
     page = request.GET.get('page')
-    events = paginator.get_page(page)
+    events_run = paginator.get_page(page)
     return render(request, 'events/event_listing.html',
-                  {'events': events, 'filter_form': filter_form})
+                  {'events_run': events_run, 'filter_form': filter_form})
 
 def event_detail(request, slug):
 
@@ -48,18 +48,20 @@ def event_detail(request, slug):
 
 @login_required
 def create_event(request):
+    event_form = EventForm(request.POST or None, request.FILES or None)
+    file_form = MultipleFileForm(files=request.FILES or None)
 
     if request.method == 'POST':
-        form = EventForm(request.POST)
-        if form.is_valid():
-            event = form.save(commit=False)
+        if event_form.is_valid() and file_form.is_valid():
+            event = event_form.save(commit=False)
             event.host = request.user
             event.save()
+            # save the individual images
+            for file in request.FILES.getlist('gallery'):
+                Image.objects.create(album=event.album, image=file, title=file.name)
+            return redirect(event.get_absolute_url())
 
-            return redirect('events:my_events')
-
-    form = EventForm()
-    return render(request, 'events/create_event.html', {'form': form})
+    return render(request, 'events/create_event.html', {'event_form': event_form, 'file_form':file_form})
 
 @login_required
 def my_events(request):
@@ -71,16 +73,16 @@ def my_events(request):
 @login_required
 def update_event(request, slug):
     event = Event.objects.get(slug=slug)
-
+    event_form = EventForm(request.POST or None, request.FILES or None, instance=event)
+    file_form = MultipleFileForm(files=request.FILES or None)
     if request.method == 'POST':
-        form = EventForm(request.POST, instance=event)
+        if event_form.is_valid() and file_form.is_valid():
+            event = event_form.save()
+            for file in request.FILES.getlist('gallery'):
+                Image.objects.create(album=event.album, image=file, title=file.name)
+            return redirect(event.get_absolute_url())
 
-        if form.is_valid():
-            event = form.save()
-            return redirect('events:my_events')
-
-    form = EventForm(instance=event)
-    return render(request, 'events/create_event.html', {'form': form})
+    return render(request, 'events/create_event.html', {'event_form': event_form, 'file_form':file_form})
 
 @login_required
 def delete_event(request, slug):

@@ -6,6 +6,29 @@ from django.db.models.aggregates import Max
 from django.utils.text import slugify
 from django.urls import reverse
 
+from imagekit.models import ProcessedImageField
+from imagekit.processors import ResizeToFill
+
+
+def get_related_attr(obj, attrs):
+    related_obj = obj
+    for attr in attrs:
+        related_obj = getattr(related_obj, attr)
+    return related_obj
+
+def thumbnail_image_url(instance, filename):
+    '''upload_to for Event thumbnail image'''
+    return 'user_{0}/thumb_{1}'.format(instance.host.id, filename)
+
+def main_image_url(instance, filename):
+    '''upload_to for Event main image'''
+    return 'user_{0}/main_{1}'.format(instance.host.id, filename)
+
+def album_image_url(instance, filename):
+    '''upload_to for Image model'''
+    return 'user_{0}/{1}/{2}'.format(instance.album.event.host.id,
+        instance.album.title, filename)
+
 class EventQuerySet(models.QuerySet):
     def filter_by_category(self, category=None):
         db_equivalent = ''
@@ -55,6 +78,72 @@ class EventManager(models.Manager):
         )
         return self.filter(lookup).distinct()
 
+
+class EventRunQuerySet(models.QuerySet):
+
+    def filter_by_category(self, category=None):
+        db_equivalent = ''
+        for pair in Event.CATEGORY_CHOICES:
+            if pair[1] == category:
+                db_equivalent = pair[0]
+                break
+        else:
+            return self.all()
+
+        return self.filter(event__category=db_equivalent)
+
+    def filter_available(self, date_from=None, date_to=None, guests=None):
+        # filter first all the eventruns and then get the ids to events
+        date_from = date_from or timezone.now().date()
+
+        if date_to:
+            qs = self.filter(date__range=(date_from, date_to))
+        else:
+            qs = self.filter(date__gte=date_from)
+
+        if guests:
+            qs = qs.filter(seats_available__gte=guests)
+
+        return qs
+
+    def filter_first_available(self, date_from=None, date_to=None, guests=None, sort_by='date'):
+
+        if 'postgresql' in settings.DATABASES['default']['ENGINE']:
+            qs = self.filter_available(date_from, date_to, guests)
+            qs = qs.order_by('event_id', 'date', 'time').distinct('event_id')
+            return qs
+
+        qs = self.filter_available(date_from, date_to, guests).order_by('date', 'time')
+
+        event_ids = []
+        filtered = []
+        for run in qs:
+            if not run.event.id in event_ids:
+                filtered.append(run)
+                event_ids.append(run.event.id)
+
+        reverse, fields = (sort_by.startswith('-'), sort_by.lstrip('-').split('__'))
+
+        criterion = lambda obj: get_related_attr(obj, fields)
+
+        result = sorted(filtered, key=criterion, reverse=reverse)
+        return result
+
+
+class EventRunManager(models.Manager):
+
+    def get_queryset(self):
+        return EventRunQuerySet(self.model, using=self._db)
+
+    def search(self, query=None):
+        lookup = (
+                Q(event__name__icontains=query) |
+                Q(event__description__icontains=query) |
+                Q(event__location__icontains=query)
+        )
+        return self.filter(lookup).distinct()
+
+
 class Event(models.Model):
 
     FUN = 'FN'
@@ -76,7 +165,18 @@ class Event(models.Model):
     location = models.CharField(max_length=500)
     slug = models.SlugField(max_length=200, unique=True, null=True)
     created = models.DateTimeField(auto_now_add=True, null=True)
-    
+
+    thumbnail = ProcessedImageField(upload_to=thumbnail_image_url,
+                                    processors=[ResizeToFill(300, 200)],
+                                    format='PNG',
+                                    options={'quality': 60},
+                                    null=True)
+    main_image = ProcessedImageField(upload_to=main_image_url,
+                                     processors=[ResizeToFill(500, 600)],
+                                     format='PNG',
+                                     options={'quality': 100},
+                                     null=True)
+
     category = models.CharField(
         max_length=20,
         choices = CATEGORY_CHOICES,
@@ -96,6 +196,9 @@ class Event(models.Model):
             self.slug = slugify(self.name + '-with-' + self.host.username)
         super().save(*args, **kwargs)
 
+        if not hasattr(self, 'album'):
+            Album.objects.create(event=self)
+
     class Meta:
         ordering = ['name']
         unique_together = (("name", "host"),)
@@ -110,3 +213,32 @@ class EventRun(models.Model):
     price = models.DecimalField(max_digits=10, 
         decimal_places=2, blank=False, null=False)
 
+    objects = EventRunManager()
+
+class Album(models.Model):
+    event = models.OneToOneField(Event, on_delete=models.CASCADE)
+    title = models.CharField(max_length=200, null=True)
+    created = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        if not self.title:
+            self.title = "album_" + self.event.name
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return '{}'.format(self.title)
+
+class Image(models.Model):
+    album = models.ForeignKey(Album, on_delete=models.CASCADE)
+    image = ProcessedImageField(upload_to=album_image_url,
+            processors=[ResizeToFill(500,400)],
+            format='PNG',
+            options={'quality':80})
+    title = models.CharField(max_length=200, null=True)
+    created = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return '{}/{}'.format(self.album, self.title)
+
+    class Meta:
+        ordering = ['created']
