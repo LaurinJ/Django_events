@@ -1,0 +1,1 @@
+default_app_config = 'explorea.accounts.apps.AccountsConfig'
