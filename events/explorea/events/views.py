@@ -2,6 +2,8 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
+from django.views.generic import ListView
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 from .models import Event, EventRun, Album, Image
 from .forms import EventForm, EventRunForm, EventFilterForm, MultipleFileForm
@@ -63,12 +65,20 @@ def create_event(request):
 
     return render(request, 'events/create_event.html', {'event_form': event_form, 'file_form':file_form})
 
-@login_required
-def my_events(request):
+# @login_required
+# def my_events(request):
+#
+#     events = Event.objects.filter(host_id=request.user.id)
+#
+#     return render(request, 'events/my_events.html', {'events': events})
 
-    events = Event.objects.filter(host_id=request.user.id)
+class MyEventView(LoginRequiredMixin, ListView):
+    context_object_name = 'events'
+    template_name = 'events/my_events.html'
+    # model = Event
 
-    return render(request, 'events/my_events.html', {'events': events})
+    def get_queryset(self):
+        return Event.objects.filter(host_id=self.request.user.id)
 
 @login_required
 def update_event(request, slug):

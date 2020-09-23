@@ -8,7 +8,7 @@ urlpatterns = [
     # path('', views.index, name='index'),
     path('', views.event_listing, name='events'),
     path('new/', views.create_event, name='create_event'),
-    path('mine/', views.my_events, name='my_events'),
+    path('mine/', views.MyEventView.as_view(), name='my_events'),
     path('search/', views.event_search, name='search'),
 
     path('detail/<slug:slug>/', views.event_detail, name='detail'),
