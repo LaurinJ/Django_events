@@ -2,11 +2,14 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
-from django.views.generic import ListView
+from django.views.generic import ListView, DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.views.generic.edit import DeleteView, CreateView, UpdateView
+from django.urls import reverse_lazy
 
 from .models import Event, EventRun, Album, Image
-from .forms import EventForm, EventRunForm, EventFilterForm, MultipleFileForm
+from .forms import EventForm, EventRunForm, EventFilterForm
+
 
 
 def index(request):
@@ -15,7 +18,7 @@ def index(request):
 
 
 def event_listing(request, category=None):
-    events_run = EventRun.objects.all().filter_by_category(category).distinct()
+    events_run = EventRun.objects.all().filter_by_category(category)
     filter_form = EventFilterForm(request.GET or None)
 
     if request.GET and filter_form.is_valid():
@@ -33,37 +36,57 @@ def event_listing(request, category=None):
 def event_search(request):
     query = request.GET.get('q')
     events_run = EventRun.objects.search(query)
-    filter_form =  EventFilterForm()
+    filter_form = EventFilterForm()
     paginator = Paginator(events_run, 4)
     page = request.GET.get('page')
     events_run = paginator.get_page(page)
     return render(request, 'events/event_listing.html',
                   {'events_run': events_run, 'filter_form': filter_form})
 
-def event_detail(request, slug):
+# def event_detail(request, slug):
+#
+#     event = Event.objects.get(slug=slug)
+#     runs = event.eventrun_set.all().order_by('date', 'time')
+#     args = {'event': event, 'runs': runs}
+#
+#     return render(request, 'events/event_detail.html', args)
 
-    event = Event.objects.get(slug=slug)
-    runs = event.eventrun_set.all().order_by('date', 'time')
-    args = {'event': event, 'runs': runs}
+class EventDetailView(DetailView):
+    model = Event
+    context_object_name = 'event'
+    template_name = 'events/event_detail.html'
 
-    return render(request, 'events/event_detail.html', args)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data()
+        context['runs'] = self.object.eventrun_set.all()
+        return context
 
-@login_required
-def create_event(request):
-    event_form = EventForm(request.POST or None, request.FILES or None)
-    file_form = MultipleFileForm(files=request.FILES or None)
+# @login_required
+# def create_event(request):
+#     form = EventForm(request.POST or None, request.FILES or None)
+#
+#     if request.method == 'POST':
+#         if form.is_valid():
+#             form.cleaned_data.pop('gallery')
+#             event = Event.objects.create(host=request.user, **form.cleaned_data)
+#             # save the individual images
+#             for file in request.FILES.getlist('gallery'):
+#                 Image.objects.create(album=event.album, image=file, title=file.name)
+#             return redirect(event.get_absolute_url())
+#
+#     return render(request, 'events/create_event.html', {'form': form})
 
-    if request.method == 'POST':
-        if event_form.is_valid() and file_form.is_valid():
-            event = event_form.save(commit=False)
-            event.host = request.user
-            event.save()
-            # save the individual images
-            for file in request.FILES.getlist('gallery'):
-                Image.objects.create(album=event.album, image=file, title=file.name)
-            return redirect(event.get_absolute_url())
-
-    return render(request, 'events/create_event.html', {'event_form': event_form, 'file_form':file_form})
+class CreateEventView(LoginRequiredMixin, CreateView):
+    model = Event
+    form_class = EventForm
+    template_name = 'events/create_event.html'
+    def form_valid(self, form):
+        form.cleaned_data.pop('gallery')
+        event = Event.objects.create(host=self.request.user, **form.cleaned_data)
+        # save the individual images
+        for file in self.request.FILES.getlist('gallery'):
+            Image.objects.create(album=event.album, image=file, title=file.name)
+        return redirect(event.get_absolute_url())
 
 # @login_required
 # def my_events(request):
@@ -75,30 +98,44 @@ def create_event(request):
 class MyEventView(LoginRequiredMixin, ListView):
     context_object_name = 'events'
     template_name = 'events/my_events.html'
-    # model = Event
 
     def get_queryset(self):
         return Event.objects.filter(host_id=self.request.user.id)
 
-@login_required
-def update_event(request, slug):
-    event = Event.objects.get(slug=slug)
-    event_form = EventForm(request.POST or None, request.FILES or None, instance=event)
-    file_form = MultipleFileForm(files=request.FILES or None)
-    if request.method == 'POST':
-        if event_form.is_valid() and file_form.is_valid():
-            event = event_form.save()
-            for file in request.FILES.getlist('gallery'):
-                Image.objects.create(album=event.album, image=file, title=file.name)
-            return redirect(event.get_absolute_url())
+# @login_required
+# def update_event(request, slug):
+#     event = Event.objects.get(slug=slug)
+#     form = EventForm(request.POST or None, request.FILES or None, instance=event)
+#     if request.method == 'POST':
+#         if form.is_valid():
+#             event = form.save()
+#             for file in request.FILES.getlist('gallery'):
+#                 Image.objects.create(album=event.album, image=file, title=file.name)
+#             return redirect(event.get_absolute_url())
+#
+#     return render(request, 'events/create_event.html', {'form': form, 'event':event})
 
-    return render(request, 'events/create_event.html', {'event_form': event_form, 'file_form':file_form})
+class UpdateEventView(LoginRequiredMixin, UpdateView):
+    model = Event
+    form_class = EventForm
+    template_name = 'events/create_event.html'
 
-@login_required
-def delete_event(request, slug):
+    def form_valid(self, form):
+        event = form.save()
 
-    Event.objects.get(slug=slug).delete()
-    return redirect('events:my_events')
+        for file in self.request.FILES.getlist('gallery'):
+            Image.objects.create(album=event.album, image=file, title=file.name)
+        return redirect(event.get_absolute_url())
+
+# @login_required
+# def delete_event(request, slug):
+#
+#     Event.objects.get(slug=slug).delete()
+#     return redirect('events:my_events')
+
+class DeleteEventView(LoginRequiredMixin, DeleteView):
+    model = Event
+    success_url = reverse_lazy('events:my_events')
 
 @login_required
 def create_event_run(request, event_id):

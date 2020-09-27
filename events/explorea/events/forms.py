@@ -4,6 +4,7 @@ from .models import Event, EventRun
 
 
 class EventForm(forms.ModelForm):
+    gallery = forms.FileField(widget=forms.ClearableFileInput(attrs={'multiple': True}), required=False)
 
     class Meta:
         model = Event
@@ -26,6 +27,3 @@ class EventFilterForm(forms.Form):
                               widget=forms.SelectDateWidget, required=False, )
 
     guests = forms.IntegerField(required=False, min_value=1)
-
-class MultipleFileForm(forms.Form):
-    gallery = forms.FileField(widget=forms.ClearableFileInput(attrs={'multiple': True}), required=False)

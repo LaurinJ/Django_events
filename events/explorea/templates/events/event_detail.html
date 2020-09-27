@@ -23,6 +23,7 @@
 <p>{{ event.description }}</p>
 
 <a href="{% url 'events:update_event' event.slug %}">UPDATE</a>
+<a href="{% url 'events:delete_event' event.slug %}">DELETE</a>
 
 <hr>
 
