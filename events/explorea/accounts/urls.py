@@ -9,14 +9,15 @@ urlpatterns = [
     path('logout/',
          auth_views.LogoutView.as_view(template_name="accounts/logged_out.html"),
          name='logout'),
-    path('register/', views.register, name='register'),
-    path('profile/', views.profile, name='profile'),
-    path('profile/edit/', views.edit_profile, name='edit_profile'),
-    path('change-password/', views.change_password, name='change_password'),
-    path('hosts/', views.host_list, name='host_list'),
-    path('host/profile/<username>/', views.host_profile, name='host_profile'),
-    path('become-host/', views.become_host, name='become_host'),
-    re_path(r'^become-host/confirm/(?P<uidb64>[0-9A-Za-z]+)-(?P<token>.+)/$', views.activate_host,
+    path('register/', views.RegisterView.as_view(), name='register'),
+    path('profile/', views.ProfileView.as_view(), name='profile'),
+    path('profile/edit/', views.EditProfileView.as_view(), name='edit_profile'),
+    path('change-password/', views.ChangePasswordView.as_view(), name='change_password'),
+    path('hosts/', views.HostListView.as_view(), name='host_list'),
+    path('host/profile/<username>/', views.HostListView.as_view(), name='host_profile'),
+
+    path('become-host/', views.BecomHostView.as_view(), name='become_host'),
+    re_path(r'^become-host/confirm/(?P<uidb64>[0-9A-Za-z]+)-(?P<token>.+)/$', views.ActivateHostView.as_view(),
         name='activate_host'),
 
     path('reset-password/', auth_views.PasswordResetView.as_view(

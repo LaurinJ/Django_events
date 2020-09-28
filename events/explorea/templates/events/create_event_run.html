@@ -5,6 +5,8 @@
 <h2>New Run</h2>
 
 <form method="POST">
+    {% csrf_token %}
+
     {% for hidden_field in form.hidden_fields %}
         {{ hidden_field }}
     {% endfor %}

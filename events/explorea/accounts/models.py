@@ -15,3 +15,6 @@ class Profile(models.Model):
 
     def get_absolute_url(self):
         return reverse('accounts:host_profile', args=[self.user.username])
+
+    def __str__(self):
+        return f'Profile: {self.user.username}'

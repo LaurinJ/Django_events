@@ -32,17 +32,17 @@
 
 <div class="event-category-filters">
     <!--by clicking these buttons we should be taken to event listing, that show us only events of the given event category-->
-    <a class="button-gold" href="{% url 'events:events_by_category' 'fun' %}">Fun</a>
-    <a class="button-gold" href="{% url 'events:events_by_category' 'experience' %}">Experience</a>
-    <a class="button-gold" href="{% url 'events:events_by_category' 'sights' %}">Sights</a>
-    <a class="button-gold" href="{% url 'events:events_by_category' 'relax' %}">Relax</a>
+    <a class="button-gold" href="{% url 'events:events' 'fun' %}">Fun</a>
+    <a class="button-gold" href="{% url 'events:events' 'experience' %}">Experience</a>
+    <a class="button-gold" href="{% url 'events:events' 'sights' %}">Sights</a>
+    <a class="button-gold" href="{% url 'events:events' 'relax' %}">Relax</a>
 </div>
 
 <div class="tile-container">
-    {% if events_run %}
+    {% if event_runs %}
     <div class="tile-grid">
 
-            {% for eventrun in events_run %}
+            {% for eventrun in event_runs %}
                 <a class="event-tile" href="{{ eventrun.event.get_absolute_url }}">
                     {% if eventrun.event|has:'thumbnail' %}
                         <img src="{{ eventrun.event.thumbnail.url }}">
@@ -65,5 +65,5 @@
     {% endif %}
 </div>
 </div>
-{% include 'pagination.html' with page=events %}
+{% include 'pagination.html' with page=page_obj %}
 {% endblock content %}

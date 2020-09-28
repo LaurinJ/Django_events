@@ -1,7 +1,7 @@
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
-from django.db.models import Q, Max, F
+from django.db.models import Q
 from django.db.models.aggregates import Max
 from django.utils.text import slugify
 from django.urls import reverse
@@ -170,12 +170,14 @@ class Event(models.Model):
                                     processors=[ResizeToFill(300, 200)],
                                     format='PNG',
                                     options={'quality': 60},
-                                    null=True)
+                                    null=True,
+                                    blank=True)
     main_image = ProcessedImageField(upload_to=main_image_url,
                                      processors=[ResizeToFill(500, 600)],
                                      format='PNG',
                                      options={'quality': 100},
-                                     null=True)
+                                     null=True,
+                                     blank=True)
 
     category = models.CharField(
         max_length=20,
@@ -192,8 +194,7 @@ class Event(models.Model):
         return reverse('events:detail', args=[self.slug])
 
     def save(self, *args, **kwargs):
-        if not self.slug:
-            self.slug = slugify(self.name + '-with-' + self.host.username)
+        self.slug = slugify(self.name + '-with-' + self.host.username)
         super().save(*args, **kwargs)
 
         if not hasattr(self, 'album'):

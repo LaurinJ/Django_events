@@ -9,6 +9,13 @@ from django.utils.http import urlsafe_base64_decode
 from django.contrib.sites.shortcuts import get_current_site
 from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
+from django.views.generic import TemplateView, ListView, DetailView, View
+from django.views.generic.base import TemplateResponseMixin, ContextMixin
+from django.views.generic.edit import CreateView, UpdateView, FormMixin, ProcessFormView
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.urls import reverse_lazy
+from django.http import HttpResponseRedirect, JsonResponse
+from django.core.exceptions import ImproperlyConfigured
 
 from .forms import RegisterForm, EditUserForm, EditProfileForm
 from .models import Profile
@@ -16,107 +23,211 @@ from .models import Profile
 token_generator = PasswordResetTokenGenerator()
 UserModel = get_user_model()
 
-@login_required
-def become_host(request):
-    verification_email_template = 'accounts/host_verification_email.html'
-    email_context = {
-        'user': request.user,
-        'domain': get_current_site(request).domain,
-        'uidb64': urlsafe_base64_encode(force_bytes(request.user.pk)),
-        'token': token_generator.make_token(request.user)
-    }
-    html_body = render_to_string(verification_email_template, email_context)
-    subject = 'Explorea Host Verification'
-    from_email = 'admin@explorea.com'
-    to_email = request.user.email
 
-    email = EmailMessage(subject, html_body, from_email, [to_email])
-    email.send()
-    return render(request, 'accounts/verification_sent.html')
+class MultipleFormsMixin(ContextMixin):
+    form_classes = {}
+    initial = {}
+    success_url = ''
 
-def activate_host(request, uidb64, token):
-    try:
-        uid = urlsafe_base64_decode(uidb64).decode()
-        user = UserModel._default_manager.get(pk=uid)
-    except (TypeError, ValueError, OverflowError, UserModel.DoesNotExist):
-        user = None
-    if user is not None and token_generator.check_token(user, token):
-        user.profile.is_host = True
-        user.profile.save()
-        return render(request, 'accounts/verification_complete.html')
-    else:
-        return render(request, 'accounts/invalid_link.html')
+    def forms_valid(self, forms):
+        return HttpResponseRedirect(self.get_success_url())
 
-@login_required
-def host_profile(request, username):
-    host = UserModel.objects.get(username=username)
-    return render(request, 'accounts/host_profile.html', {'host': host})
+    def forms_invalid(self, forms):
+        return self.render_to_response(self.get_context_data(forms=forms))
 
-@login_required
-def host_list(request):
-    profiles = Profile.objects.filter(is_host=True)
-    if request.user.profile.is_host:
-        profiles = profiles.exclude(user__pk=request.user.id)
+    def get_context_data(self, **kwargs):
+        if 'forms' not in kwargs:
+            forms = self.get_forms()
+            for name, form in forms.items():
+                kwargs[name] = form
+        return super().get_context_data(**kwargs)
 
-    return render(request, 'accounts/host_list.html', {'profiles': profiles})
+    def get_forms(self, form_classes=None):
+        """Return a dict of form instances to be used in this view."""
+        if form_classes is None:
+            forms = self.get_form_classes()
+        kwargs = self.get_forms_kwargs()
 
-@login_required
-def profile(request):
+        return {name: form(**kwargs[name]) for name, form in forms.items()}
 
-    return render(request, 'accounts/profile.html')
+    def get_form_classes(self):
+        return self.form_classes.copy()
+
+    def get_forms_kwargs(self):
+        kwargs = {}
+        for name, form in self.form_classes.items():
+            kwargs[name] = {
+                'initial': self.get_initial(),
+            }
+            if self.request.method in ('POST', 'PUT'):
+                kwargs[name].update({
+                    'data': self.request.POST,
+                    'files': self.request.FILES,
+                })
+        return kwargs
+
+    def get_initial(self):
+        return self.initial.copy()
+
+    def get_success_url(self):
+        if not self.success_url:
+            raise ImproperlyConfigured("No URL to redirect to. Provide a success_url.")
+        return str(self.success_url)
 
 
-def register(request):
+class MultipleModelFormsMixin(MultipleFormsMixin):
+    instances = {}
 
-    if request.method == 'POST':
+    def dispatch(self, request, *args, **kwargs):
+        self.instances = self.get_instances()
+        return super().dispatch(request, *args, **kwargs)
 
-        form = RegisterForm(request.POST)
+    def get_instances(self):
+        instances = {}
+        for name in self.form_classes:
+            instances[name] = None
+        return instances
 
-        if form.is_valid():
-            user = form.save()
+    def forms_valid(self, forms):
+        for form in forms:
+            form.save()
+        return super().forms_valid(forms)
 
-            raw_password = form.cleaned_data.get('password1')
-            
-            user = authenticate(username=user.username, password=raw_password)
-            login(request, user)
+    def get_forms_kwargs(self):
+        kwargs = super().get_forms_kwargs()
+        for name, form in self.form_classes.items():
+            kwargs[name].update({
+                'instance': self.instances[name]
+            })
+        return kwargs
 
-            return redirect('/accounts/profile')
+
+class ProcessMultipleFormsView(MultipleFormsMixin, TemplateResponseMixin,
+                               ProcessFormView):
+
+    def get(self, request, *args, **kwargs):
+        return self.render_to_response(self.get_context_data())
+
+    def post(self, request, *args, **kwargs):
+        self.forms = self.get_forms()
+        if all(form.is_valid for form in self.forms.values()):
+            return self.forms_valid(self.forms.values())
         else:
-            return render(request, 'accounts/register.html', {'form': form} )
+            return self.forms_invalid(self.forms.values())
 
-    form = RegisterForm()
-    return render(request, 'accounts/register.html', {'form': form} )
 
-@login_required
-def edit_profile(request):
-    form_user = EditUserForm(request.POST or None, instance=request.user)
-    form_profile = EditProfileForm(request.POST or None, request.FILES or None, instance=request.user.profile)
+class ProcessMultipleModelFormsView(MultipleModelFormsMixin, ProcessMultipleFormsView):
+    pass
 
-    if request.method == 'POST':
-        if form_user.is_valid() and form_profile.is_valid():
-            user = form_user.save()
-            profile = form_profile.save()
-            # request.session['profile_changes'] = request.session.setdefault('profile_changes', 0) + 1
-            return redirect('accounts:profile')
+
+class BecomHostView(LoginRequiredMixin, TemplateView):
+    template_name = 'accounts/verification_sent.html'
+
+    def get(self, request, *args, **kwargs):
+        verification_email_template = 'accounts/host_verification_email.html'
+        email_context = {
+            'user': request.user,
+            'domain': get_current_site(request).domain,
+            'uidb64': urlsafe_base64_encode(force_bytes(request.user.pk)),
+            'token': token_generator.make_token(request.user)
+        }
+
+        html_body = render_to_string(verification_email_template, email_context)
+        subject = 'Explorea Host Verification'
+        from_email = 'admin@explorea.com'
+        to_email = request.user.email
+
+        email = EmailMessage(subject, html_body, from_email, [to_email])
+        email.send()
+
+        return super().get(request, *args, **kwargs)
+
+class ActivateHostView(TemplateView):
+
+    def get(self, request, *args, **kwargs):
+        try:
+            uidb64 = self.kwargs['uidb64']
+            token = self.kwargs['token']
+            uid = urlsafe_base64_decode(uidb64).decode()
+            user = UserModel._default_manager.get(pk=uid)
+        except (TypeError, ValueError, OverflowError, UserModel.DoesNotExist):
+            user = None
+
+        if user is not None and token_generator.check_token(user, token):
+            user.profile.is_host = True
+            user.profile.save()
+            return render(request, 'accounts/verification_complete.html')
+
         else:
-            return render(request, 'accounts/edit_profile.html', {'form_user': form_user, 'form_profile':form_profile} )
-
-    return render(request, 'accounts/edit_profile.html', {'form_user':form_user, 'form_profile':form_profile} )
-
-@login_required
-def change_password(request):
-
-    if request.method == 'POST':
-        form = PasswordChangeForm(data=request.POST, user=request.user)
-
-        if form.is_valid():
-            user = form.save()
-            update_session_auth_hash(request, user)
-            return redirect('/accounts/profile/')
-        else:
-            return render(request, 'accounts/change_password.html', {'form': form})
-
-    form = PasswordChangeForm(user=request.user)
-    return render(request, 'accounts/change_password.html', {'form': form})
+            return render(request, 'accounts/invalid_link.html')
 
 
+class HostProfileView(LoginRequiredMixin, DetailView):
+    model = UserModel
+    slug_url_kwarg = 'username'
+    slug_field = 'username'
+    context_object_name = 'host'
+    template_name = 'accounts/host_profile.html'
+
+
+
+class HostListView(LoginRequiredMixin, ListView):
+    model = Profile
+    template_name = 'accounts/host_list.html'
+    context_object_name  = 'profiles'
+
+    def get_queryset(self):
+        profiles = Profile.objects.filter(is_host=True)
+        profiles = profiles.exclude(user__pk=self.request.user.id)
+        return profiles
+
+class ProfileView(LoginRequiredMixin, TemplateView):
+    template_name = 'accounts/profile.html'
+
+
+class RegisterView(CreateView):
+    model = UserModel
+    form_class = RegisterForm
+    template_name = 'accounts/register.html'
+    success_url = reverse_lazy('accounts:profile')
+
+    def form_valid(self, form):
+        self.object = form.save()
+        user = authenticate(username=self.object.username, password=form.cleaned_data['password1'])
+        login(self.request, user)
+        return HttpResponseRedirect(self.get_success_url())
+
+class EditProfileView(LoginRequiredMixin, ProcessMultipleModelFormsView):
+    template_name = 'accounts/edit_profile.html'
+    form_classes = {'user_form': EditUserForm, 'profile_form': EditProfileForm}
+    success_url = reverse_lazy('accounts:profile')
+
+    def get_forms_kwargs(self):
+        kwargs = super().get_forms_kwargs()
+        kwargs['user_form'].update({
+                'instance': self.request.user
+        })
+        kwargs['profile_form'].update({
+                'instance': self.request.user.profile
+        })
+        return kwargs
+
+class ChangePasswordView(LoginRequiredMixin, UpdateView):
+    model = UserModel
+    form_class = PasswordChangeForm
+    template_name = 'accounts/change_password.html'
+    success_url = reverse_lazy('accounts:profile')
+
+    def form_valid(self, form):
+        self.object = form.save()
+        update_session_auth_hash(self.request, self.object)
+        return HttpResponseRedirect(self.get_success_url())
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.pop('instance')
+        kwargs.update({'user': self.object})
+        return kwargs
+
+    def get_object(self):
+        return self.request.user

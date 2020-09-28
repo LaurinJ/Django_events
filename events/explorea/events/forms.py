@@ -27,3 +27,8 @@ class EventFilterForm(forms.Form):
                               widget=forms.SelectDateWidget, required=False, )
 
     guests = forms.IntegerField(required=False, min_value=1)
+
+
+class EventSearchFilterForm(EventFilterForm):
+    q = forms.CharField(required=False, max_length=1000, initial='',
+                        widget=forms.HiddenInput())
