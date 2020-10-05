@@ -16,6 +16,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
 from django.http import HttpResponseRedirect, JsonResponse
 from django.core.exceptions import ImproperlyConfigured
+from django.contrib.auth.models import Group
 
 from .forms import RegisterForm, EditUserForm, EditProfileForm
 from .models import Profile
@@ -156,6 +157,8 @@ class ActivateHostView(TemplateView):
         if user is not None and token_generator.check_token(user, token):
             user.profile.is_host = True
             user.profile.save()
+            groups = Group.objects.get(pk=1)
+            user.groups.add(groups)
             return render(request, 'accounts/verification_complete.html')
 
         else:
@@ -231,3 +234,18 @@ class ChangePasswordView(LoginRequiredMixin, UpdateView):
 
     def get_object(self):
         return self.request.user
+
+class ValidateFieldExistValueView(View):
+    def post(self, request, *args, **kwargs):
+        name = self.request.POST['field_name']
+        value = self.request.POST['field_value']
+        data = {
+            'exists': self.model.objects.filter(**{name: value}).exists()
+        }
+        if data['exists']:
+            data['error_message'] = 'The {} {} already exists'.format(*(name, value))
+        return JsonResponse(data)
+
+class ValidateRegisterFormView(ValidateFieldExistValueView):
+    validated_fields = ['username', 'email']
+    model = UserModel

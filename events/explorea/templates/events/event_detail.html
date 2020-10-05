@@ -1,10 +1,16 @@
 {% extends 'base.html' %}
+
 {% load event_tags %}
+{% load cart_tags %}
+
 {% block content %}
 
-
-
-<h2>{{ event.name }}</h2>
+<h2>{{ event.name }} 
+    {% if run.event.host is user %}
+    | <a class='edit-button' href="{% url 'events:update_event' event.slug %}">UPDATE</a> 
+    | <a class='edit-button' href="{% url 'events:delete_event' event.slug %}">DELETE</a>
+    {% endif %}
+</h2>
 
 <table>
     <tr>
@@ -13,25 +19,23 @@
 </table>
 
 <div class="main-image">
-    {% if event|has:'main_image' %}
-    <img src="{{ event.main_image.url }}">
-    {% else %}
-    <div class="not-available"></div>
-    {% endif %}
+{% if event|has:'main_image' %}
+<img src="{{ event.main_image.url }}">
+{% else %}
+<div class="not-available"></div>
+{% endif %}
 </div>
 
 <p>{{ event.description }}</p>
 
-<a href="{% url 'events:update_event' event.slug %}">UPDATE</a>
-<a href="{% url 'events:delete_event' event.slug %}">DELETE</a>
-
-<hr>
-
+<!--Image slideshow-->
 <div class="owl-carousel">
 {% for image in event.album.image_set.all %}
 <img src="{{ image.image.url }}" alt="{{ image.title }}">
 {% endfor %}
 </div>
+
+<hr>
 
 <h2>Availability</h2>
 
@@ -42,13 +46,29 @@
       <td>{{ run.date }}, {{ run.time }}</td>
       <td>{{ run.seats_available }}</td>
       <td>{{ run.price }}</td>
-      <td><a href="{% url 'events:update_event_run' event.slug run.pk%}">CHANGE</a></td>
-      <td><a href="{% url 'events:delete_event_run' run.pk%}">DELETE</a></td>
+
+      {% if run.event.host is user %}
+      <td><a class='edit-button' href="{% url 'events:update_event_run' run.event.slug run.id %}">CHANGE</a></td>
+      <td><a class='edit-button' href="{% url 'events:delete_event_run' run.event.slug run.id %}">DELETE</a></td>
+      {% else %}
+      <td>
+        <div>
+          <form class='cart-add' method='POST' action="{% url 'cart:add' run.event.slug %}">
+            {% csrf_token %}
+            {{ cart_add_form.quantity }}
+            {# {{ cart_add_form.current_quantity }} #} 
+            <input name="current_quantity" value="{% get_key cart run.id %}" type="hidden">
+            <input name="product_id" value={{ run.id }} type="hidden">
+            <button type='submit'>Add to Cart</button>
+          </form>
+        </div>
+      </td>
+      {% endif %}
  </tr>
 {% endfor %}
 </table>
 
 <br>
 
-<a href="/events/">Back</a> | <a href="{% url 'events:create_event_run' event.slug %}">Add New</a>
+<a href="{% url 'events:events' 'all' %}">Back to Events</a> | <a href="{% url 'events:create_event_run' event.slug %}">Add New</a>
 {% endblock content %}

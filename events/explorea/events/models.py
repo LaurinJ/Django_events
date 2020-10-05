@@ -113,21 +113,21 @@ class EventRunQuerySet(models.QuerySet):
             qs = qs.order_by('event_id', 'date', 'time').distinct('event_id')
             return qs
 
-        qs = self.filter_available(date_from, date_to, guests).order_by('date', 'time')
-
-        event_ids = []
-        filtered = []
-        for run in qs:
-            if not run.event.id in event_ids:
-                filtered.append(run)
-                event_ids.append(run.event.id)
-
-        reverse, fields = (sort_by.startswith('-'), sort_by.lstrip('-').split('__'))
-
-        criterion = lambda obj: get_related_attr(obj, fields)
-
-        result = sorted(filtered, key=criterion, reverse=reverse)
-        return result
+        # qs = self.filter_available(date_from, date_to, guests).order_by('date', 'time')
+        #
+        # event_ids = []
+        # filtered = []
+        # for run in qs:
+        #     if not run.event.id in event_ids:
+        #         filtered.append(run)
+        #         event_ids.append(run.event.id)
+        #
+        # reverse, fields = (sort_by.startswith('-'), sort_by.lstrip('-').split('__'))
+        #
+        # criterion = lambda obj: get_related_attr(obj, fields)
+        #
+        # result = sorted(filtered, key=criterion, reverse=reverse)
+        # return result
 
 
 class EventRunManager(models.Manager):

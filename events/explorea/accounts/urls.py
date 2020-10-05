@@ -31,6 +31,8 @@ urlpatterns = [
          name='password_reset_confirm'),
     path('reset-password/complete/', auth_views.PasswordResetCompleteView.as_view(), name='password_reset_complete'),
 
+    path('ajax/validate_username/', views.ValidateRegisterFormView.as_view(), name='validate_register_form'),
+
 ]
 app_name = 'accounts'
 

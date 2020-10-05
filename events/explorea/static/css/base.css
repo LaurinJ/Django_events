@@ -30,7 +30,7 @@ footer {
 a {
     color: #000;
     text-decoration: none;
-
+    
 }
 
 a:focus {
@@ -124,7 +124,7 @@ header {
     border-radius: 15px;
     padding-left: 20px;
     padding-bottom: 2px;
-    color: #a58006;
+    color: #a58006; 
 }
 
 /*===============FOOTER=================*/
@@ -169,7 +169,7 @@ footer section a:hover {
     background-repeat: no-repeat;
     background-image: url('/static/img/chiringito_big.jpeg');
     height: 800px;
-
+    
     display: grid;
     grid-template-rows: 15% 25% 30% 1fr;
     grid-template-columns: 10% repeat(6, 1fr) 10%;
@@ -194,7 +194,7 @@ footer section a:hover {
     background-color: #cca620;
     color: white;
     border-radius: 1em;
-
+    
 }
 
 .main-banner a:hover {
@@ -208,17 +208,17 @@ footer section a:hover {
 
 .main-banner a:nth-of-type(2) {
     grid-area: 3 / 4 / 4 / 5;
-
+    
 }
 
 .main-banner a:nth-of-type(3) {
     grid-area: 3 / 5 / 4 / 6;
-
+    
 }
 
 .main-banner a:nth-of-type(4) {
     grid-area: 3 / 6 / 4 / 7;
-
+    
 }
 
 
@@ -313,7 +313,7 @@ footer section a:hover {
 }
 
 .event-details {
-    padding: 1em;
+    padding: 1em; 
 }
 .event-details p:nth-of-type(1) {
     font-style: italic;
@@ -348,14 +348,14 @@ footer section a:hover {
     white-space: nowrap;
 }
 
-.login_form h2,
+.login_form h2, 
 .register_form h2 {
     font-size: 40px;
     height: 50px;
     margin-bottom: 50px;
 }
 
-.login_form p,
+.login_form p, 
 .register_form p {
     height: 2.6rem;
     line-height: 2.6rem;
@@ -363,7 +363,7 @@ footer section a:hover {
     /*display: flex;*/
 }
 
-.login_form label,
+.login_form label, 
 .register_form label  {
     display: inline-block;
 
@@ -372,7 +372,7 @@ footer section a:hover {
     width: 12rem;
 }
 
-.login_form input,
+.login_form input, 
 .register_form input {
     width: 400px;
     font-size: 1.5em;
@@ -456,7 +456,7 @@ button:hover {
 }
 
 .event-filters .form-filter:nth-of-type(4) {
-    grid-area:  1 / 4 / 2 / 5
+    grid-area:  1 / 4 / 2 / 5 
 }
 
 .event-filters button {

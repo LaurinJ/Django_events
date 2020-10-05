@@ -1,5 +1,4 @@
 {% extends 'base.html' %}
-
 {% load event_tags %}
 
 {% block title %}
@@ -11,7 +10,8 @@
     <h1>What do we have here ...</h1>
 </div>
 
-<form class="event-filters"  method="GET">
+<form class="event-filters"  action={{ request.get_full_path }} method="GET">
+
     {% for hidden_field in form.hidden_fields %}
         {{ hidden_field }}
     {% endfor %}
@@ -19,14 +19,19 @@
     {% for field in filter_form.visible_fields %}
         <div class="form-filter">
             {{ field.label_tag }} {{ field }}
-            <div class="errors">
-                {% for error in field.errors %}
-                    <div class="error">{{ error }}</div>
-                {% endfor %}
-            </div>
         </div>
-
+        
+        <div class="errors" for={{ field.name }}>
+            {% for error in field.errors %}
+            <div class="error" >
+                {{ error }}
+            </div>
+            {% endfor %}
+        </div>
+        
+        
     {% endfor %}
+   
     <button type="submit">Filter</button>
 </form>
 
@@ -36,6 +41,7 @@
     <a class="button-gold" href="{% url 'events:events' 'experience' %}">Experience</a>
     <a class="button-gold" href="{% url 'events:events' 'sights' %}">Sights</a>
     <a class="button-gold" href="{% url 'events:events' 'relax' %}">Relax</a>
+    <a class="button-gold" href="{% url 'events:events' 'all' %}">All</a>
 </div>
 
 <div class="tile-container">
@@ -53,17 +59,22 @@
                         <p>{{ eventrun.event.host }}</p>
                         <p>{{ eventrun.event.name }}</p>
                         <p>{{ eventrun.event.location}}</p>
-                        <p>Next: {{ eventrun.event.eventrun_set.all|active|min_attr_value:"date" }}</p>
-                        <p>From: {{ eventrun.event.eventrun_set.all|active|min_attr_value:"price" }}</p>
-                        <p>Seats: {{ eventrun.event.eventrun_set.all|active|min_attr_value:"price" }}</p>
+                        <p><strong>Next:</strong> {{ eventrun.date }}</p>
+                        <p><strong>Price:</strong> $ {{ eventrun.price }}</p>
+                        <p><strong>Seats:</strong> {{ eventrun.seats_available }}</p>
+                        <hr>
+                        <p><strong>Price From:</strong> $ {{ eventrun.event.eventrun_set.all|active|min_attr_value:"price" }}</p>
+                        <p><strong>Seats Up To:</strong> {{ eventrun.event.eventrun_set.all|active|max_attr_value:"seats_available" }}</p>
                     </div>
-                </a>
+                </a>        
             {% endfor %}
 
     {% else %}
         <div class="info empty-search">No events found ...</div>
     {% endif %}
+    </div>
 </div>
-</div>
+
 {% include 'pagination.html' with page=page_obj %}
+
 {% endblock content %}

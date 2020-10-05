@@ -1,48 +1,16 @@
 from django.shortcuts import render, redirect
 from django.views.generic import ListView, DetailView
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.generic.edit import DeleteView, CreateView, UpdateView, FormMixin
+from django.contrib.auth.mixins import UserPassesTestMixin
+from django.views.generic.edit import DeleteView, CreateView, UpdateView
+from django.core.exceptions import PermissionDenied
 from django.urls import reverse_lazy
 from django.contrib import messages
 
 from .models import Event, EventRun, Image
 from .forms import EventForm, EventRunForm, EventFilterForm, EventSearchFilterForm
+from .mixins import GroupRequiredMixin, MessageActionMixin, GetFormMixin
 
-
-class GetFormMixin(FormMixin):
-
-    def get_form_kwargs(self):
-        kwargs = {
-            'initial': self.get_initial(),
-            'prefix': self.get_prefix(),
-            'data': self.request.GET
-        }
-        return kwargs
-
-class MessageActionMixin:
-    @property
-    def success_message(self):
-        return NotImplemented
-
-    @property
-    def error_message(self):
-        return NotImplemented
-
-    def get_object(self, queryset=None):
-        return getattr(self, 'object', None) or super().get_object(queryset)
-
-    def form_valid(self, form):
-        obj = self.get_object()
-        messages.success(self.request, self.success_message % obj.__dict__)
-
-    def form_invalid(self, form):
-        obj = self.get_object()
-        messages.error(self.request, self.error_message % obj.__dict__)
-
-    def delete(self, request, *args, **kwargs):
-        obj = self.get_object()
-        messages.success(self.request, self.success_message % obj.__dict__)
-        return super().delete(request, *args, **kwargs)
+from explorea.cart.forms import CartAddForm
 
 def index(request):
 
@@ -53,7 +21,7 @@ class EventListView(GetFormMixin, ListView):
     context_object_name = 'event_runs'
     form_class = EventFilterForm
     template_name = 'events/event_listing.html'
-    paginate_by = 4
+    paginate_by = 10
 
     def get(self, request, *args, **kwargs):
         self.form = self.get_form()
@@ -100,18 +68,21 @@ class EventDetailView(DetailView):
     model = Event
     context_object_name = 'event'
     template_name = 'events/event_detail.html'
+    form_class = CartAddForm
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data()
         context['runs'] = self.object.eventrun_set.all()
+        context['cart_add_form'] = self.form_class()
         return context
 
-class CreateEventView(LoginRequiredMixin, MessageActionMixin, CreateView):
+class CreateEventView(GroupRequiredMixin, MessageActionMixin, CreateView):
     model = Event
     form_class = EventForm
     template_name = 'events/create_event.html'
     success_message = 'The event %(name)s has been created successfully'
     error_message = 'The event could not be created'
+    groups_required = ['hosts']
 
     def form_valid(self, form):
         form.cleaned_data.pop('gallery')
@@ -122,19 +93,28 @@ class CreateEventView(LoginRequiredMixin, MessageActionMixin, CreateView):
         super().form_valid(form)
         return redirect(event.get_absolute_url())
 
-class MyEventView(LoginRequiredMixin, ListView):
+class MyEventView(ListView):
     context_object_name = 'events'
     template_name = 'events/my_events.html'
 
     def get_queryset(self):
         return Event.objects.filter(host_id=self.request.user.id)
 
-class UpdateEventView(LoginRequiredMixin,MessageActionMixin , UpdateView):
+class UpdateEventView(UserPassesTestMixin, MessageActionMixin, UpdateView):
     model = Event
     form_class = EventForm
     template_name = 'events/create_event.html'
     success_message = 'The event %(name)s has been updated successfully'
     error_message = 'The event %(name)s could not be updated'
+    groups_required = ['hosts']
+    permission_denied_message = "Too bad, you don't have access to these lands"
+
+    def test_func(self):
+        event = self.get_object()
+        return self.request.user.id == event.host.id
+
+    def handle_no_permission(self):
+        raise PermissionDenied(self.get_permission_denied_message())
 
     def form_valid(self, form):
         event = form.save()
@@ -144,15 +124,25 @@ class UpdateEventView(LoginRequiredMixin,MessageActionMixin , UpdateView):
         super().form_valid(form)
         return redirect(event.get_absolute_url())
 
-class DeleteEventView(LoginRequiredMixin, MessageActionMixin, DeleteView):
+class DeleteEventView(UserPassesTestMixin, MessageActionMixin, DeleteView):
     model = Event
     success_url = reverse_lazy('events:my_events')
     success_message = "The event %(name)s has been removed successfully"
+    groups_required = ['hosts']
+    permission_denied_message = "Too bad, you don't have access to these lands"
 
-class CreateEventRunView(LoginRequiredMixin, CreateView):
+    def test_func(self):
+        event = self.get_object()
+        return self.request.user.id == event.host.id
+
+    def handle_no_permission(self):
+        raise PermissionDenied(self.get_permission_denied_message())
+
+class CreateEventRunView(GroupRequiredMixin, CreateView):
     model = Event
     form_class = EventRunForm
     template_name = 'events/create_event_run.html'
+    groups_required = ['hosts']
 
     def form_valid(self, form):
         event = Event.objects.get(slug=self.kwargs['slug'])
@@ -160,16 +150,34 @@ class CreateEventRunView(LoginRequiredMixin, CreateView):
         messages.success(self.request, 'EventRun byl uspesne vytvo5en')
         return redirect(self.object.event.get_absolute_url())
 
-class UpdateEventRunView(LoginRequiredMixin, UpdateView):
+class UpdateEventRunView(UserPassesTestMixin, UpdateView):
     model = EventRun
     form_class = EventRunForm
     template_name = 'events/update_event_run.html'
+    groups_required = ['hosts']
+    permission_denied_message = "Too bad, you don't have access to these lands"
+
+    def test_func(self):
+        event = self.get_object()
+        return self.request.user.id == event.host.id
+
+    def handle_no_permission(self):
+        raise PermissionDenied(self.get_permission_denied_message())
 
     def get_success_url(self):
         return self.object.event.get_absolute_url()
 
-class DeleteEventRunView(LoginRequiredMixin, DeleteView):
+class DeleteEventRunView(UserPassesTestMixin, DeleteView):
     model = EventRun
+    groups_required = ['hosts']
+    permission_denied_message = "Too bad, you don't have access to these lands"
+
+    def test_func(self):
+        event = self.get_object()
+        return self.request.user.id == event.host.id
+
+    def handle_no_permission(self):
+        raise PermissionDenied(self.get_permission_denied_message())
 
     def get_success_url(self):
         return self.object.event.get_absolute_url()

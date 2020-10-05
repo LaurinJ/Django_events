@@ -11,20 +11,24 @@
   
   <form method="post" enctype="multipart/form-data">
     {% csrf_token %}
-    {% for field in form_user.visible_fields %}
+    {% for field in user_form.visible_fields %}
         {% for error in field.errors %}
         {{ error }}
         {% endfor %}
+
         {% if field.label != 'Password' %}
         <p>{{ field.label_tag}}{{ field }}</p>
         {% endif %}
+        
 
     {% endfor %}
-    {% for field in form_profile.visible_fields %}
+
+    {% for field in profile_form.visible_fields %}
         {% for error in field.errors %}
         {{ error }}
         {% endfor %}
         <p>{{ field.label_tag}}{{ field }}</p>
+
     {% endfor %}
 
     <button type="submit">Save</button>
